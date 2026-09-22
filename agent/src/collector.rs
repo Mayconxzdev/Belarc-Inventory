@@ -1,4 +1,9 @@
-#![allow(clippy::manual_is_multiple_of, clippy::unnecessary_filter_map)]
+#![allow(
+    unknown_lints,
+    clippy::chunks_exact_to_as_chunks,
+    clippy::manual_is_multiple_of,
+    clippy::unnecessary_filter_map
+)]
 
 use std::process::Command;
 use std::time::Instant;
