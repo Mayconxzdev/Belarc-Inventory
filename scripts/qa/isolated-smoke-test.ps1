@@ -100,7 +100,7 @@ if ($RunAgent -and -not (Test-Path -LiteralPath $agentExe)) {
 
 $testTiUser = 'ti-isolated'
 $testTiPassword = 'Isolated-Test-Only-Change-Me-2026!'
-$testAgentToken = 'isolated-agent-token-2026'
+$testAgentToken = $null
 $testHostname = 'ISOLATED-PC-01'
 $serverProcess = $null
 $agentProcess = $null
@@ -201,6 +201,11 @@ try {
     if (-not $login.token) { throw 'Login isolado nao retornou sessao.' }
     $auth = @{ Authorization = "Bearer $($login.token)" }
     Write-Host '[PASS] login TI isolado' -ForegroundColor Green
+
+    $enrollment = Invoke-TestJson -Method POST -Path '/api/tokens' -Headers $auth -Body @{ hostname = $testHostname }
+    if (-not $enrollment.token) { throw 'Matrícula isolada não retornou token de agente.' }
+    $testAgentToken = $enrollment.token
+    Write-Host '[PASS] matrícula temporária do agente' -ForegroundColor Green
 
     $register = Invoke-TestJson -Method POST -Path '/api/register' -Body @{
         agent_token = $testAgentToken
@@ -332,8 +337,10 @@ try {
     Write-Host '[PASS] lista e estatisticas de chamados' -ForegroundColor Green
 
     if ($RunAgent) {
+        $agentEnrollment = Invoke-TestJson -Method POST -Path '/api/tokens' -Headers $auth -Body @{ hostname = 'ISOLATED-AGENT-02' }
+        if (-not $agentEnrollment.token) { throw 'Matrícula isolada do agente de coleta não retornou token.' }
         [Environment]::SetEnvironmentVariable('BELARC_SERVER_URL', $BaseUrl, 'Process')
-        [Environment]::SetEnvironmentVariable('BELARC_AGENT_TOKEN', 'isolated-real-agent-token-2026', 'Process')
+        [Environment]::SetEnvironmentVariable('BELARC_AGENT_TOKEN', $agentEnrollment.token, 'Process')
         [Environment]::SetEnvironmentVariable('PROGRAMDATA', (Join-Path $DataRoot 'programdata'), 'Process')
         New-Item -ItemType Directory -Path $env:PROGRAMDATA -Force | Out-Null
         $agentOut = Join-Path $DataRoot 'agent.stdout.log'
