@@ -1,0 +1,93 @@
+# =============================================================================
+# Belarc Inventory — Git ignore
+# =============================================================================
+
+# --- Rust / Cargo ---
+/target/
+**/target/
+Cargo.lock.bak
+
+# --- Build & distribuição (gerados por build-agent.ps1 / build-publish.ps1) ---
+/dist/
+/publish/
+/release/
+/output/
+/bk/
+/tmp/
+/_recovered/
+*.exe
+*.pdb
+*.msi
+
+# --- Dados locais de desenvolvimento (não versionar inventário real) ---
+/test-data/*
+!/test-data/.gitkeep
+/data/
+/attachments/
+/chamados-export/
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# --- Tokens, credenciais e segredos ---
+**/agent-token.txt
+**/ti-bootstrap.txt
+**/install-info.json
+*.token
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Perfis específicos de uma empresa: o perfil de exemplo versionado é o único
+# arquivo de configuração aceito no repositório público.
+config/company-profile.production.json
+config/company-profile.local.json
+agent/collectors/_company-profile.local.json
+
+# --- Logs e cache do agente ---
+*.log
+agent.log
+maintenance.log
+belarc-*.json
+
+# --- Coletores copiados em runtime (só fonte em agent/collectors/) ---
+# Ignorados automaticamente por estarem dentro de /target/
+
+# --- Sistema operacional ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- macOS (se clonar em outro SO) ---
+.DS_Store
+.AppleDouble
+._*
+
+# --- IDEs e editores ---
+.idea/
+.vscode/
+*.code-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.cursor/
+
+# --- Backup / temporários ---
+*~
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# --- Relatórios gerados (dados reais de PCs) ---
+/test-data/reports/
+
+# --- Screenshots: versionar em docs/assets/screenshots/ (ver README da pasta) ---

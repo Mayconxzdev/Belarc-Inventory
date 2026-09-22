@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Belarc Inventory — Dashboard TI</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css?v=apagar-contrast-20260825" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Belarc Inventory</h1>
+      <span class="subtitle">Inventário corporativo <span class="brand-credit">by Diogo</span></span>
+    </div>
+    <nav class="view-toggle" id="view-toggle">
+      <button class="view-btn active" data-view="inventory">Por PC</button>
+      <button class="view-btn" data-view="management">Gestão TI</button>
+      <button class="view-btn hidden" data-view="directory" id="view-directory-btn" title="Requer login TI">Diretório</button>
+      <button class="view-btn hidden" data-view="tickets" id="view-tickets-btn" title="Requer login TI">Chamados</button>
+      <button class="view-btn hidden" data-view="bi" id="view-bi-btn" title="Requer login TI">Dashboard BI</button>
+    </nav>
+    <div class="stats" id="stats">
+      <div class="stat"><span class="stat-val" id="stat-total">—</span><span class="stat-lbl">PCs</span></div>
+      <div class="stat online"><span class="stat-val" id="stat-online">—</span><span class="stat-lbl">Online</span></div>
+      <div class="stat offline"><span class="stat-val" id="stat-offline">—</span><span class="stat-lbl">Offline</span></div>
+      <button type="button" class="stat alert stat-btn" id="stat-alerts-btn" title="Clique para ver a lista de alertas da frota">
+        <span class="stat-val" id="stat-alerts">—</span>
+        <span class="stat-lbl">Alertas TI</span>
+      </button>
+      <div class="stat" id="stat-health-wrap" title="Média de conformidade TI da frota">
+        <span class="stat-val" id="stat-health">—</span><span class="stat-lbl">Conformidade média</span>
+      </div>
+      <div class="stat bsod"><span class="stat-val" id="stat-bsod">—</span><span class="stat-lbl">BSOD</span></div>
+      <div class="auth-box" id="auth-box">
+        <span class="auth-user hidden" id="auth-user"></span>
+        <button type="button" class="btn secondary auth-btn" id="btn-login">Entrar</button>
+        <button type="button" class="btn secondary auth-btn hidden" id="btn-logout">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="login-modal hidden" id="login-modal" aria-hidden="true">
+    <div class="login-modal-backdrop" id="login-modal-backdrop"></div>
+    <div class="login-modal-panel" role="dialog" aria-labelledby="login-modal-title">
+      <header class="login-modal-header">
+        <h2 id="login-modal-title">Login TI</h2>
+        <button type="button" class="alerts-modal-close" id="login-modal-close" aria-label="Fechar">&times;</button>
+      </header>
+      <p class="login-modal-desc">Acesso a senhas e edição do Cadastro TI (LGPD).</p>
+      <form id="login-form" class="login-form">
+        <label>Usuário<input name="username" type="text" autocomplete="username" required /></label>
+        <label>Senha<input name="password" type="password" autocomplete="current-password" required /></label>
+        <p class="login-error hidden" id="login-error"></p>
+        <div class="form-actions">
+          <button type="submit" class="btn">Entrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="resolve-modal hidden" id="resolve-modal" aria-hidden="true">
+    <div class="resolve-modal-backdrop" id="resolve-modal-backdrop"></div>
+    <div class="resolve-modal-panel" role="dialog" aria-labelledby="resolve-modal-title">
+      <header class="resolve-modal-header">
+        <h2 id="resolve-modal-title">Concluir chamado</h2>
+        <button type="button" class="alerts-modal-close" id="resolve-modal-close" aria-label="Fechar">&times;</button>
+      </header>
+      <p class="resolve-modal-desc" id="resolve-modal-code">Informe o que foi resolvido (opcional).</p>
+      <label class="resolve-modal-label">Resolução
+        <textarea id="resolve-modal-text" rows="4" placeholder="Ex.: Troca do cabo de rede / driver atualizado / reinício do serviço…"></textarea>
+      </label>
+      <div class="resolve-modal-actions">
+        <button type="button" class="btn secondary" id="resolve-modal-cancel">Cancelar</button>
+        <button type="button" class="btn primary" id="resolve-modal-confirm">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alerts-modal hidden" id="alerts-drawer" aria-hidden="true">
+    <div class="alerts-modal-backdrop" id="alerts-drawer-backdrop"></div>
+    <div class="alerts-modal-panel" role="dialog" aria-labelledby="alerts-modal-title">
+      <header class="alerts-modal-header">
+        <div class="alerts-modal-title-wrap">
+          <h2 id="alerts-modal-title">Alertas da frota</h2>
+          <span class="alerts-modal-total" id="alerts-drawer-total">—</span>
+        </div>
+        <button type="button" class="alerts-modal-close" id="alerts-drawer-close" aria-label="Fechar">&times;</button>
+      </header>
+      <p class="alerts-modal-desc">Problemas detectados automaticamente nos PCs monitorados.</p>
+      <div class="alerts-modal-summary" id="alerts-drawer-summary"></div>
+      <div class="alerts-drawer-filters no-print">
+        <input type="search" id="alerts-filter-search" class="alerts-search-input" placeholder="Buscar PC, categoria ou mensagem..." />
+        <div class="alerts-sev-pills" id="alerts-sev-pills">
+          <button type="button" class="alerts-pill active" data-sev="all">Todos</button>
+          <button type="button" class="alerts-pill sev-critical" data-sev="critical">Crítico</button>
+          <button type="button" class="alerts-pill sev-warning" data-sev="warning">Atenção</button>
+          <button type="button" class="alerts-pill sev-info" data-sev="info">Info</button>
+        </div>
+        <label class="alerts-cat-filter">
+          <span>Categoria</span>
+          <select id="alerts-filter-category">
+            <option value="all">Todas</option>
+          </select>
+        </label>
+      </div>
+      <div id="alerts-drawer-body" class="alerts-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-tools">
+        <input type="search" id="search" placeholder="Buscar hostname, IP, AnyDesk..." />
+        <select id="filter-status">
+          <option value="all">Todos</option>
+          <option value="online">Online</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+      <ul id="machine-list" class="machine-list"></ul>
+    </aside>
+
+    <main class="detail-panel" id="detail-panel">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🖥</div>
+        <p>Selecione um computador na lista</p>
+        <span class="empty-hint">Atualização automática a cada 30s (não apaga cadastro em edição)</span>
+      </div>
+      <div class="detail-content hidden" id="detail-content">
+        <div class="detail-header">
+          <div class="detail-title">
+            <h2 id="detail-hostname">—</h2>
+            <div class="detail-meta" id="detail-meta"></div>
+          </div>
+          <div class="detail-actions">
+            <div class="health-block" id="detail-health" title="Conformidade TI — SMART, segurança, updates, eventos, disco, temperatura, certificados corp.">
+              <span class="health-block-label">Conformidade TI</span>
+              <span class="score-badge" id="detail-score">—</span>
+              <span class="health-block-hint" id="detail-score-hint"></span>
+            </div>
+            <a class="btn secondary" id="detail-report" href="#" target="_blank">Relatório .md</a>
+            <a class="btn secondary" id="detail-ia-prompt" href="#" target="_blank" title="Markdown completo para colar em ChatGPT/Claude">Exportar IA (.md)</a>
+            <button type="button" class="btn" id="btn-ficha-infos" title="Ficha Infos A4 (requer login TI)">Ficha Infos</button>
+          </div>
+        </div>
+
+        <div class="pc-ops-strip" id="pc-ops-strip"></div>
+        <div id="pc-owner-banner" class="pc-owner-banner hidden"></div>
+
+        <div class="summary-grid" id="summary-grid"></div>
+
+        <nav class="tabs" id="tabs">
+          <button class="tab active" data-tab="admin">Cadastro TI</button>
+          <button class="tab" data-tab="tickets-pc">Chamados</button>
+          <button class="tab" data-tab="inventory">Inventário</button>
+          <button class="tab" data-tab="alerts-tab">Alertas</button>
+          <button class="tab" data-tab="health">Conformidade</button>
+          <button class="tab" data-tab="network-remote">Rede</button>
+          <button class="tab" data-tab="software">Software</button>
+          <button class="tab" data-tab="users">Usuários</button>
+          <button class="tab" data-tab="hardware">Hardware</button>
+          <button class="tab" data-tab="security">Segurança</button>
+          <button class="tab" data-tab="all">JSON</button>
+        </nav>
+
+        <div class="tab-panels" id="tab-panels"></div>
+      </div>
+      <div class="management-panel hidden" id="management-panel">
+        <div class="mgmt-toolbar no-print">
+          <div class="mgmt-toolbar-left">
+            <h2>Gestão TI</h2>
+            <p class="section-desc">Visão completa da frota — leitura facilitada e relatório para impressão.</p>
+          </div>
+          <div class="mgmt-toolbar-actions">
+            <input type="search" id="mgmt-search" class="mgmt-search" placeholder="Buscar PC, usuário, IP..." />
+            <label class="mgmt-control">
+              <span class="mgmt-control-lbl">Tamanho da letra</span>
+              <select id="mgmt-font-size" class="mgmt-select" title="Ajuste para leitura na tela e na impressão">
+                <option value="normal">Normal</option>
+                <option value="large" selected>Grande</option>
+                <option value="xlarge">Muito grande</option>
+              </select>
+            </label>
+            <button type="button" class="btn secondary" id="btn-print-summary" title="Tabela resumida — ideal para visão geral da frota">Imprimir resumo</button>
+            <a class="btn secondary" href="/api/export/hardware.xlsx" title="Baixar inventário comparativo em Excel">Exportar Excel</a>
+            <button type="button" class="btn secondary" id="btn-export-tickets" title="Planilha de chamados (requer login TI)">Exportar chamados</button>
+            <button type="button" class="btn secondary" id="btn-export-compliance" title="Planilha de conformidade (requer login TI)">Exportar conformidade</button>
+            <button type="button" class="btn secondary" id="btn-export-fichas-infos" title="Excel 1 aba por PC com Infos + senhas TI">Excel Fichas Infos</button>
+            <button type="button" class="btn" id="btn-print-detail" title="Um cartão por PC com todos os detalhes">Imprimir detalhado</button>
+          </div>
+        </div>
+        <div id="management-report" class="mgmt-report"></div>
+      </div>
+      <div class="tickets-panel hidden" id="tickets-panel">
+        <div class="tickets-toolbar">
+          <div>
+            <h2>Chamados</h2>
+            <p class="section-desc">Kanban da TI — atualiza a cada poucos segundos com o app do usuário.</p>
+            <div class="tickets-stats-mini muted" id="tickets-stats-mini">—</div>
+          </div>
+          <div class="tickets-toolbar-actions">
+            <span id="tickets-sync" class="tickets-sync muted">—</span>
+            <button type="button" class="btn secondary" id="btn-export-tickets-kanban" title="Planilha de chamados">Exportar chamados</button>
+            <button type="button" class="btn secondary" id="btn-export-compliance-kanban" title="Planilha de conformidade">Exportar conformidade</button>
+            <button type="button" class="btn secondary" id="btn-tickets-refresh">Atualizar</button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="tickets-filters" id="tickets-filters">
+          <input type="search" id="tickets-search" class="tickets-search" placeholder="Buscar título, PC, pessoa..." />
+          <div class="tickets-filter-pills" id="tickets-status-pills">
+            <button type="button" class="tf-pill active" data-tf-status="all">Todos</button>
+            <button type="button" class="tf-pill" data-tf-status="open">Aberto</button>
+            <button type="button" class="tf-pill" data-tf-status="in_progress">Em andamento</button>
+            <button type="button" class="tf-pill" data-tf-status="waiting">Aguardando</button>
+            <button type="button" class="tf-pill" data-tf-status="done">Concluído</button>
+          </div>
+          <select id="tickets-filter-priority" class="tf-select" title="Filtrar por prioridade">
+            <option value="all">Todas prioridades</option>
+            <option value="high">Alta</option>
+            <option value="normal">Normal</option>
+            <option value="low">Baixa</option>
+          </select>
+          <div class="tf-dates">
+            <label>De <input type="date" id="tf-date-from" /></label>
+            <label>Até <input type="date" id="tf-date-to" /></label>
+          </div>
+          <span class="tf-count muted" id="tf-count"></span>
+        </div>
+
+        <div class="tickets-layout">
+          <div class="kanban" id="kanban-board"></div>
+          <aside class="ticket-detail hidden" id="ticket-detail" aria-live="polite"></aside>
+        </div>
+      </div>
+      <div class="bi-panel hidden" id="bi-panel">
+        <div class="bi-toolbar">
+          <div>
+            <h2>Dashboard BI — Chamados</h2>
+            <p class="section-desc">Visão analítica do desempenho de atendimento e métricas de chamados.</p>
+          </div>
+          <div class="bi-toolbar-actions">
+            <select id="bi-period" class="tf-select" title="Período de análise">
+              <option value="all">Todo o período</option>
+              <option value="7">Últimos 7 dias</option>
+              <option value="30" selected>Últimos 30 dias</option>
+              <option value="90">Últimos 90 dias</option>
+            </select>
+            <button type="button" class="btn secondary" id="btn-bi-refresh">Atualizar</button>
+          </div>
+        </div>
+        <div class="bi-kpi-row" id="bi-kpi-row"></div>
+        <div class="bi-charts-row">
+          <div class="bi-chart-card">
+            <h4>Distribuição por status</h4>
+            <canvas id="bi-chart-status" width="260" height="200"></canvas>
+          </div>
+          <div class="bi-chart-card">
+            <h4>Distribuição por prioridade</h4>
+            <canvas id="bi-chart-priority" width="260" height="200"></canvas>
+          </div>
+          <div class="bi-chart-card">
+            <h4>Idade dos chamados abertos</h4>
+            <canvas id="bi-chart-age" width="260" height="200"></canvas>
+          </div>
+          <div class="bi-chart-card">
+            <h4>Tempo médio de resolução</h4>
+            <div class="bi-big-metric" id="bi-resolve-time">—</div>
+            <div class="bi-metric-sub" id="bi-resolve-detail"></div>
+          </div>
+          <div class="bi-chart-card">
+            <h4>Satisfação do usuário</h4>
+            <div class="bi-big-metric" id="bi-satisfaction">—</div>
+            <div class="bi-metric-sub" id="bi-satisfaction-detail"></div>
+          </div>
+          <div class="bi-chart-card">
+            <h4>SLA — Resolução em 48h</h4>
+            <div class="bi-big-metric" id="bi-sla">—</div>
+            <div class="bi-metric-sub" id="bi-sla-detail"></div>
+          </div>
+        </div>
+        <div class="bi-charts-row">
+          <div class="bi-chart-card bi-chart-wide">
+            <h4>Volume diário (abertos vs. fechados)</h4>
+            <canvas id="bi-chart-volume" width="700" height="180"></canvas>
+          </div>
+          <div class="bi-chart-card bi-chart-wide">
+            <h4>Chamados por PC (top 10)</h4>
+            <canvas id="bi-chart-bypc" width="700" height="180"></canvas>
+          </div>
+        </div>
+        <div class="bi-table-section">
+          <h3>Chamados abertos — detalhes</h3>
+          <table class="bi-table" id="bi-open-table">
+            <thead>
+              <tr><th>Código</th><th>Título</th><th>PC</th><th>Prioridade</th><th>Status</th><th>Aberto há</th></tr>
+            </thead>
+            <tbody id="bi-open-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="directory-panel hidden" id="directory-panel">
+        <div class="dir-console-toolbar">
+          <div class="dir-console-title">
+            <h2>Diretório</h2>
+            <span class="directory-overview muted" id="directory-overview">—</span>
+          </div>
+          <div class="dir-omnibox-wrap" id="dir-omnibox-wrap">
+            <kbd class="dir-omnibox-hint">Ctrl+K</kbd>
+            <input type="search" id="directory-omnibox" class="dir-omnibox"
+              placeholder="Buscar pessoa, PC-01, hostname, e-mail, AnyDesk, cabo…"
+              autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="dir-console-actions">
+            <button type="button" class="btn" id="btn-dir-autofill" title="Preenche AnyDesk ID e licenças a partir do inventário">Atualizar do inventário</button>
+            <button type="button" class="btn secondary" id="btn-dir-suggestions" title="Vínculos sugeridos pelo inventário">Sugestões</button>
+            <button type="button" class="btn" id="btn-directory-new">Nova pessoa</button>
+            <button type="button" class="btn secondary" id="btn-directory-refresh">Atualizar</button>
+          </div>
+        </div>
+        <nav class="dir-workspace-tabs" id="dir-workspace-tabs" role="tablist">
+          <button type="button" class="dir-ws-tab is-active" data-ws="people">Pessoas</button>
+          <button type="button" class="dir-ws-tab" data-ws="cables">Cabos</button>
+          <button type="button" class="dir-ws-tab" data-ws="ramais">Ramais</button>
+          <button type="button" class="dir-ws-tab" data-ws="anydesk">AnyDesk</button>
+          <button type="button" class="dir-ws-tab" data-ws="cybersul">OperationsSuite</button>
+          <button type="button" class="dir-ws-tab" data-ws="nas">NAS</button>
+          <button type="button" class="dir-ws-tab" data-ws="software">Licenças</button>
+          <button type="button" class="dir-ws-tab" data-ws="server">Logins Server</button>
+        </nav>
+        <div class="dir-presets" id="dir-presets" role="toolbar" aria-label="Filtros rápidos">
+          <button type="button" class="dir-preset is-active" data-preset="all">Todos</button>
+          <button type="button" class="dir-preset" data-preset="no-pc">Sem PC</button>
+          <button type="button" class="dir-preset" data-preset="offline">Offline</button>
+          <button type="button" class="dir-preset" data-preset="no-anydesk">Sem AnyDesk</button>
+          <button type="button" class="dir-preset" data-preset="orphans">Órfãos</button>
+        </div>
+        <div class="directory-layout directory-layout--console" id="directory-people-layout">
+          <div class="directory-main" id="directory-main" tabindex="0"></div>
+          <aside class="directory-detail" id="directory-detail" aria-live="polite">
+            <p class="dir-empty">Selecione um resultado ou digite na busca.</p>
+          </aside>
+        </div>
+        <div class="dir-workspace-panel hidden" id="dir-workspace-panel"></div>
+        <div class="dir-cofre-backdrop hidden" id="dir-cofre-backdrop"></div>
+        <aside class="dir-cofre-drawer hidden" id="dir-cofre-drawer" aria-label="Cofre e-mails">
+          <div class="dir-cofre-head">
+            <h3>E-mails</h3>
+            <button type="button" class="btn secondary" id="btn-dir-cofre-close">Fechar</button>
+          </div>
+          <div class="dir-cofre-body" id="dir-cofre-body"></div>
+        </aside>
+        <div class="dir-suggest-backdrop hidden" id="dir-suggest-backdrop"></div>
+        <aside class="dir-suggest-panel hidden" id="dir-suggest-panel" aria-label="Sugestões de vínculo">
+          <div class="dir-cofre-head">
+            <h3>Sugestões de vínculo</h3>
+            <div class="dir-actions">
+              <button type="button" class="btn" id="btn-dir-accept-high">Aceitar alta confiança</button>
+              <button type="button" class="btn secondary" id="btn-dir-suggest-close">Fechar</button>
+            </div>
+          </div>
+          <div id="dir-suggest-body" class="dir-suggest-body"></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="ficha-modal hidden" id="ficha-modal" aria-hidden="true">
+    <div class="ficha-modal-backdrop" id="ficha-modal-backdrop"></div>
+    <div class="ficha-modal-panel" role="dialog" aria-labelledby="ficha-modal-title">
+      <header class="ficha-modal-header no-print">
+        <h2 id="ficha-modal-title">Ficha Infos</h2>
+        <div class="ficha-modal-actions">
+          <button type="button" class="btn secondary" id="btn-ficha-excel" title="Excel deste PC">Excel</button>
+          <button type="button" class="btn" id="btn-ficha-print" title="Imprimir A4">Imprimir</button>
+          <button type="button" class="alerts-modal-close" id="ficha-modal-close" aria-label="Fechar">&times;</button>
+        </div>
+      </header>
+      <p class="ficha-schema-warn hidden muted no-print" id="ficha-schema-warn"></p>
+      <div id="pc-infos-sheet" class="pc-infos-sheet" aria-live="polite">
+        <p class="muted">Carregando ficha…</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ficha-confirm-modal hidden" id="ficha-confirm-modal" aria-hidden="true">
+    <div class="ficha-modal-backdrop" id="ficha-confirm-backdrop"></div>
+    <div class="ficha-confirm-panel" role="dialog">
+      <h3 id="ficha-confirm-title">Documento confidencial</h3>
+      <p id="ficha-confirm-msg">As senhas saem em texto claro na impressão. Continuar?</p>
+      <div class="ficha-confirm-actions">
+        <button type="button" class="btn secondary" id="ficha-confirm-excel">Exportar Excel</button>
+        <button type="button" class="btn secondary" id="ficha-confirm-cancel">Cancelar</button>
+        <button type="button" class="btn" id="ficha-confirm-ok">Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=abrir-webview-20260824"></script>
+</body>
+</html>

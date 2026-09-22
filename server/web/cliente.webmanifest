@@ -1,0 +1,10 @@
+{
+  "name": "Portal de Chamados",
+  "short_name": "Chamados",
+  "description": "Portal interno para abertura e acompanhamento de chamados.",
+  "start_url": "/cliente.html",
+  "display": "standalone",
+  "background_color": "#0c121b",
+  "theme_color": "#0c121b",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

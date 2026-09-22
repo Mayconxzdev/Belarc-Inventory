@@ -1,0 +1,22 @@
+/* Compositor de conversa: anexo nunca disputa largura com o texto. */
+.comment-form { flex-wrap: wrap; align-items: center; }
+.comment-form #comment-body { flex: 1 1 520px; min-width: 280px; }
+.comment-form > button { height: 42px; }
+.attachment-tools { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; min-width: 0; padding: 9px; border: 1px dashed #365272; border-radius: 8px; background: #0e1825; }
+.attachment-tools.is-dragging { border-color: var(--blue); background: #142944; box-shadow: 0 0 0 3px rgba(87,152,247,.12); }
+.attachment-button { border: 1px solid #3b5d82; border-radius: 7px; background: #17304e; color: #d8e9ff; padding: 7px 10px; font-weight: 650; white-space: nowrap; }
+.attachment-button:hover { border-color: var(--blue); background: #20436d; }
+.attachment-hint { color: var(--muted); font-size: 12px; }
+.inline-file-list { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.attachment-chip { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 5px 7px 5px 9px; color: #d9e8fa; border: 1px solid #365979; background: #142238; border-radius: 14px; font-size: 12px; }
+.attachment-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: min(410px, 52vw); }
+.attachment-chip-size { color: var(--muted); white-space: nowrap; }
+.attachment-chip button { width: 21px; height: 21px; border: 0; border-radius: 50%; background: #2a3b50; color: #cfe0f5; font-size: 17px; line-height: 18px; padding: 0; }
+.attachment-chip button:hover { background: #8e3d4b; color: #fff; }
+.ticket-files { margin-top: 20px; }
+.ticket-file { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #1d3149; }
+.ticket-file:last-child { border-bottom: 0; }
+.ticket-file > span { min-width: 0; overflow-wrap: anywhere; }
+.ticket-file button { flex: 0 0 auto; border: 1px solid #3b5d82; border-radius: 6px; background: #142b47; color: #d8e9ff; padding: 6px 10px; }
+.ticket-file button:hover { border-color: var(--blue); background: #20436d; }
+@media(max-width:700px){ .comment-form #comment-body { min-width: 100%; } .attachment-hint { flex-basis: 100%; } .attachment-chip-name { max-width: 180px; } }

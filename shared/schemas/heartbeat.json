@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HeartbeatPayload",
+  "type": "object",
+  "required": ["agent_token", "hostname", "uptime_seconds"],
+  "properties": {
+    "agent_token": { "type": "string" },
+    "hostname": { "type": "string" },
+    "serial": { "type": ["string", "null"] },
+    "uuid": { "type": ["string", "null"] },
+    "mac_primary": { "type": ["string", "null"] },
+    "logged_user": { "type": ["string", "null"] },
+    "ip_address": { "type": ["string", "null"] },
+    "uptime_seconds": { "type": "integer", "minimum": 0 },
+    "last_boot": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

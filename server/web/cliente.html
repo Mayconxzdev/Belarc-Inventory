@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal de Chamados</title>
+  <meta name="theme-color" content="#0c121b">
+  <meta name="description" content="Portal interno de chamados">
+  <link rel="manifest" href="cliente.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <link rel="stylesheet" href="cliente.css?v=setores-dinamicos-20260914">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><strong>Chamados</strong><span>Serviços TI</span></div>
+    <p id="subtitle" class="device">Abra e acompanhe solicitações do seu computador.</p>
+    <div class="header-actions">
+      <span id="refresh-status" class="hint" aria-live="polite"></span>
+      <button id="install-app" class="secondary hidden" type="button">Instalar no dispositivo</button>
+      <button id="enable-notifications" class="secondary hidden" type="button">Ativar avisos</button>
+      <button id="refresh" class="secondary hidden" type="button">↻ Atualizar</button>
+      <button id="logout" class="hidden" type="button">Sair</button>
+      <span id="connection-state" class="connection"><i></i>Conectado</span>
+    </div>
+  </header>
+  <main class="portal-shell">
+    <aside class="portal-sidebar">
+      <nav id="portal-tabs" class="portal-nav" aria-label="Área de chamados">
+        <button type="button" data-tab="new" class="nav-primary active">＋ Novo chamado</button>
+        <button type="button" data-tab="mine" class="nav-secondary">Meus chamados</button>
+        <button type="button" data-tab="received" class="received-nav hidden"><span class="inbox-icon">↓</span><span>Chamados recebidos</span><b>!</b></button>
+      </nav>
+      <section class="sidebar-guide" aria-label="Orientação do portal">
+        <p class="section-label">ATENDIMENTO INTERNO</p>
+        <p>O computador e o responsável são reconhecidos automaticamente.</p>
+        <p class="hint">Os chamados recebidos aparecem somente para os setores configurados neste PC.</p>
+      </section>
+    </aside>
+    <section class="portal-content">
+      <section id="launch-card" class="card narrow"><h2>Abra pelo Chamados Serviços</h2><p>Este portal reconhece automaticamente o computador, o responsável e as filas de atendimento quando é aberto pelo aplicativo instalado neste PC.</p><p class="hint">O usuário comum não usa senha. Feche esta página e abra o atalho <strong>Chamados Serviços</strong>. Se o atalho não existir, solicite a instalação ou o reparo à TI.</p></section>
+      <section id="portal" class="hidden">
+        <section id="new-ticket" class="card form-card"><div class="section-kicker">SOLICITAÇÃO</div><h2>Novo chamado</h2><p class="subtitle">Descreva o necessário. O sistema identifica automaticamente o computador que abriu a solicitação.</p><form id="ticket-form"><div class="grid"><label>Computador<select id="machine" required></select></label><label>Enviar para<select id="department" required aria-label="Setor que receberá o chamado"></select></label><label>Prioridade<select id="priority"><option value="normal">Normal</option><option value="low">Baixa</option><option value="high">Alta</option><option value="critical">Crítica</option></select></label></div><label>Resumo do problema<input id="title" maxlength="160" required placeholder="Ex.: não consigo imprimir"></label><label>Descreva o que aconteceu<textarea id="description" rows="6" lang="pt-BR" spellcheck="true" placeholder="Explique o problema, mensagens exibidas e quando começou."></textarea></label><label class="attachment-field"><span>Anexar foto ou arquivo</span><input id="attachments" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx" capture="environment" multiple></label><p class="hint">No celular, toque no anexo para usar a câmera ou escolher um arquivo. Evite anexar informações sensíveis que não sejam necessárias ao atendimento.</p><p class="hint">O corretor ortográfico do navegador está ativado em português.</p><p id="ticket-error" class="error" aria-live="polite"></p><div class="actions"><button class="big-action">Abrir chamado</button></div></form></section>
+        <section id="ticket-list" class="card ticket-workspace hidden"><div class="list-heading"><div><div class="section-kicker">ACOMPANHAMENTO</div><h2 id="queue-title">Meus chamados</h2><p id="queue-note" class="hint"></p></div><span class="live-mark">Atualização automática</span></div><div id="tickets" class="tickets"></div></section>
+      </section>
+    </section>
+  </main>
+  <script src="cliente.js?v=acesso-automatico-20260914"></script>
+</body>
+</html>

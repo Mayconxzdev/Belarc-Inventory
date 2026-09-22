@@ -1,0 +1,32 @@
+{
+  "company_name": "Northwind Services",
+  "project_tagline": "Inventário e saúde de PCs Windows — perfil de exemplo",
+  "erp_name": "Operations Suite",
+  "erp_server_ip": "192.0.2.25",
+  "inventory_server_ip": "192.0.2.10",
+  "antivirus_name": "Endpoint Protection",
+  "banking_app": {
+    "id": "banking-app-example",
+    "label": "Aplicação bancária (exemplo)"
+  },
+  "erp_branches": [
+    {
+      "id": "operations-main",
+      "label": "Operations Suite",
+      "install_path": "C:\\OperationsSuite\\client.exe",
+      "temp_paths": [
+        "C:\\OperationsSuite\\temp",
+        "C:\\OperationsSuite\\cache"
+      ],
+      "process_patterns": ["operations"],
+      "product_patterns": ["client.exe", "operations suite"]
+    }
+  ],
+  "ui": {
+    "erp_user": "Operations Suite — usuário",
+    "erp_access_reference": "Referência de acesso (senha não armazenada)",
+    "erp_offline_warning": "Operations Suite indisponível — verifique a rede e o serviço",
+    "freeze_prone_description": "Aplicações críticas configuráveis, uso de disco e eventos do Windows são monitorados no histórico.",
+    "critical_apps_summary": "Operations Suite e aplicações configuradas pela empresa"
+  }
+}

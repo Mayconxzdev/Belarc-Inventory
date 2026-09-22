@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  source-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+      - run: cargo test --workspace
+
+  public-tree:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate public tree
+        shell: pwsh
+        run: .\scripts\qa\assert-public-tree.ps1
+
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo build -p belarc-server -p belarc-agent
+      - run: cargo build -p belarc-setup --bins
+      - name: Isolated smoke test
+        shell: pwsh
+        run: .\scripts\qa\isolated-smoke-test.ps1 -Build

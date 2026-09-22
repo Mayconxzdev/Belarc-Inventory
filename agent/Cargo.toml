@@ -1,0 +1,27 @@
+[package]
+name = "belarc-agent"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "belarc-agent"
+path = "src/main.rs"
+
+[dependencies]
+belarc-shared = { path = "../shared" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = "0.2"
+tokio = { workspace = true }
+rusqlite = { workspace = true }
+reqwest = { workspace = true }
+toml = "0.8"
+
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.8"

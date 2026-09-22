@@ -1,0 +1,37 @@
+[package]
+name = "belarc-setup"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "belarc_setup"
+path = "src/lib.rs"
+
+[[bin]]
+name = "BelarcPC"
+path = "src/bin/pc.rs"
+
+[[bin]]
+name = "BelarcServidor"
+path = "src/bin/servidor.rs"
+
+[[bin]]
+name = "BelarcServidorAtualizar"
+path = "src/bin/servidor_atualizar.rs"
+
+[[bin]]
+name = "BelarcClienteSetup"
+path = "src/bin/cliente_setup.rs"
+
+[[bin]]
+name = "BelarcTISetup"
+path = "src/bin/ti_setup.rs"
+
+[dependencies]
+zip = "2.2"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread"] }
+
+[build-dependencies]
+zip = "2.2"

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Chamados Serviços TI</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="ticket-enhancements.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><strong>Chamados</strong><span>Serviços TI</span></div>
+    <div class="device" id="device-name">Conectando este computador…</div>
+    <div class="connection loading" id="connection"><i></i><span>Conectando</span></div>
+  </header>
+  <main class="shell">
+    <aside class="sidebar">
+      <button class="nav-primary" data-view="new">+&nbsp; Novo chamado</button>
+      <button class="nav-secondary" id="refresh">↻&nbsp; Atualizar</button>
+      <div class="filter-group">
+        <button class="filter active" data-status="all">Todos <b id="count-all">0</b></button>
+        <button class="filter" data-status="open">Abertos <b id="count-open">0</b></button>
+        <button class="filter" data-status="done">Concluídos <b id="count-done">0</b></button>
+      </div>
+      <p class="section-label">POR DATA DE ABERTURA</p>
+      <div class="date-filters"><button class="period active" data-period="all">Todas</button><button class="period" data-period="today">Hoje</button><button class="period" data-period="week">7 dias</button><button class="period" data-period="month">30 dias</button></div>
+      <div class="ticket-list" id="mine-list"></div>
+      <button class="received-nav hidden" id="received-nav" data-view="received"><span class="inbox-icon">↓</span><span>Chamados recebidos</span><b id="received-count">0</b></button>
+    </aside>
+    <section class="content" id="content" aria-live="polite"></section>
+  </main>
+  <template id="loading-template"><div class="page-centered"><div class="spinner"></div><h2>Carregando chamados</h2><p>Identificando este computador com segurança.</p></div></template>
+  <!-- Wails injeta os métodos nativos em window.go antes do aplicativo. -->
+  <script src="/wails/runtime.js"></script>
+  <script src="app.js"></script>
+  <script src="ticket-enhancements.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "hostname": "DEMO-PC-01",
+  "tier": "t1",
+  "collected_at": "2026-06-08T14:30:00Z",
+  "collectors": [
+    {
+      "name": "hardware",
+      "version": "1.0",
+      "data": {
+        "model": "Dell OptiPlex 7090",
+        "cpu": "Intel Core i5-11500",
+        "ram_gb": 16,
+        "disks": [{ "letter": "C:", "size_gb": 512, "free_gb": 128 }]
+      }
+    },
+    {
+      "name": "software",
+      "version": "1.0",
+      "data": {
+        "standard_apps": [
+          { "id": "erp_branch_a", "label": "AcmeERP (Filial Alpha)", "category": "erp", "installed": true },
+          { "id": "eset", "label": "ESET", "category": "seguranca", "installed": true, "version": "10.1.0" }
+        ]
+      }
+    },
+    {
+      "name": "performance",
+      "version": "1.0",
+      "data": {
+        "cpu_load_percent": 24.5,
+        "memory_used_percent": 62.0,
+        "erp_server": { "ip": "10.0.0.50", "reachable": true, "latency_ms": 2.1 }
+      }
+    }
+  ]
+}
