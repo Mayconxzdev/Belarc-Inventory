@@ -12,7 +12,7 @@ Belarc Inventory foi projetado para redes privadas Windows. Não exponha o servi
 
 ## Matrícula de um agente
 
-Um PC só deve ser matriculado a partir de uma sessão TI. Gere um token de matrícula temporário no painel, informe a URL LAN/VPN e o token ao instalador do agente. O agente recebe seu token próprio após a matrícula e o mantém localmente em `%ProgramData%\BelarcInventory`.
+Um PC só deve ser matriculado a partir de uma sessão TI. Gere no painel um token de matrícula de uso único, válido por 24 horas, e informe a URL LAN/VPN e o token ao instalador do agente. Depois do primeiro registro, o token fica associado somente àquela máquina e não pode matricular outro PC.
 
 Não compartilhe tokens por e-mail, tickets públicos ou capturas de tela. Revogue a matrícula se o PC for descartado ou transferido.
 

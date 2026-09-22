@@ -44,10 +44,10 @@ Os executáveis e instaladores não são versionados nem distribuídos como rele
 ## Implantar em LAN/VPN privada
 
 1. Ajuste `config/company-profile.json` para sua organização e mantenha dados reais fora do Git.
-2. Instale e inicie `BelarcServidor` no computador de TI com URL LAN/VPN explícita.
+2. Defina a URL LAN/VPN do servidor e instale/inicie `BelarcServidor` no computador de TI.
 3. Crie a conta inicial de TI e limite o firewall à subnet autorizada.
-4. Gere uma matrícula temporária no painel de TI.
-5. Instale `BelarcPC` nas estações usando URL e matrícula emitidas pela TI.
+4. Autentique-se no painel de TI e gere uma matrícula de agente, válida por 24 horas e para um único PC.
+5. Instale `BelarcPC` nas estações usando a URL e a matrícula emitidas pela TI.
 
 Leia o [guia de implantação LAN/VPN](docs/deployment-lan.md) antes de instalar em uma rede real.
 
@@ -70,6 +70,7 @@ Servidor LAN/VPN
 - Uso restrito a LAN/VPN privada; não exponha este servidor diretamente na internet.
 - Senhas de ERP, compartilhamentos e aplicações não são armazenadas por esta edição pública.
 - Tokens, bancos, anexos, relatórios, certificados, perfis locais e logs não pertencem ao Git.
+- Esta edição não distribui binários: valide o build e a instalação física na sua rede antes de usá-la operacionalmente.
 - Execute `scripts\qa\assert-public-tree.ps1` antes de publicar uma alteração.
 
 Veja todos os limites em [SECURITY.md](SECURITY.md).

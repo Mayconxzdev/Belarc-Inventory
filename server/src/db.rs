@@ -127,6 +127,8 @@ impl Database {
                 token TEXT PRIMARY KEY,
                 hostname TEXT,
                 created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                consumed_at TEXT,
                 active INTEGER NOT NULL DEFAULT 1
             );
 
@@ -580,6 +582,15 @@ impl Database {
         );
         let _ = conn.execute("ALTER TABLE directory_software ADD COLUMN ip TEXT", []);
         let _ = conn.execute("ALTER TABLE directory_software ADD COLUMN usuario TEXT", []);
+        // Instalações antigas não possuíam expiração/consumo para a matrícula.
+        // As tentativas podem falhar em bancos novos, por isso são deliberadamente
+        // idempotentes durante a atualização de esquema.
+        let _ = conn.execute("ALTER TABLE agent_tokens ADD COLUMN expires_at TEXT", []);
+        let _ = conn.execute("ALTER TABLE agent_tokens ADD COLUMN consumed_at TEXT", []);
+        let _ = conn.execute(
+            "UPDATE agent_tokens SET expires_at = COALESCE(expires_at, created_at)",
+            [],
+        );
         // Promove chaves do JSON legado (Infos CSV) para colunas tipadas
         let _ = conn.execute_batch(
             r#"
@@ -1610,6 +1621,22 @@ impl Database {
             return Ok(id);
         }
 
+        // Um agente novo só pode entrar com uma matrícula criada por uma sessão TI.
+        // Depois do primeiro uso, o mesmo token continua ligado exclusivamente à
+        // máquina registrada acima, mas não pode cadastrar outro computador.
+        let enrollment_is_valid = conn
+            .query_row(
+                "SELECT 1 FROM agent_tokens
+                 WHERE token = ?1 AND active = 1 AND expires_at > ?2 AND consumed_at IS NULL",
+                params![payload.agent_token, now],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if !enrollment_is_valid {
+            return Err(DbError::InvalidToken);
+        }
+
         let id = belarc_shared::new_id();
         conn.execute(
             "INSERT INTO machines (id, agent_token, hostname, serial, machine_uuid, mac_primary, machine_fingerprint, status, first_seen, last_seen)
@@ -1624,6 +1651,10 @@ impl Database {
                 fingerprint,
                 now,
             ],
+        )?;
+        conn.execute(
+            "UPDATE agent_tokens SET active = 0, consumed_at = ?2 WHERE token = ?1",
+            params![payload.agent_token, now],
         )?;
         Ok(id)
     }
@@ -2216,9 +2247,12 @@ impl Database {
     pub fn create_agent_token(&self, hostname: Option<&str>) -> Result<String, DbError> {
         let token = uuid::Uuid::new_v4().to_string();
         let conn = self.conn.lock().unwrap();
+        let now = Utc::now();
+        let expires_at = (now + Duration::hours(24)).to_rfc3339();
         conn.execute(
-            "INSERT INTO agent_tokens (token, hostname, created_at) VALUES (?1, ?2, ?3)",
-            params![token, hostname, Utc::now().to_rfc3339()],
+            "INSERT INTO agent_tokens (token, hostname, created_at, expires_at)
+             VALUES (?1, ?2, ?3, ?4)",
+            params![token, hostname, now.to_rfc3339(), expires_at],
         )?;
         Ok(token)
     }
