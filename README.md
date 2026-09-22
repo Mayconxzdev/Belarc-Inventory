@@ -6,6 +6,8 @@
 [![Licença](https://img.shields.io/badge/licença-MIT-2ea44f)](LICENSE)
 
 > Inventário e operação de TI para redes privadas: transforma a coleta contínua de estações Windows em contexto para suporte, auditoria e decisão.
+>
+> **Estado atual:** sistema em uso interno na empresa onde atuo. As telas públicas usam dados fictícios e foram sanitizadas para não expor nomes, endereços, inventário, credenciais ou informações operacionais reais.
 
 <p align="center">
   <img src="docs/images/01-Gestao-TI-frota-ficticia.png" alt="Gestão de TI com frota fictícia, indicadores de conformidade e contexto do computador" width="100%" />
@@ -17,7 +19,7 @@ Uma máquina pode parecer apenas um nome em uma lista até o momento em que falh
 
 O **Belarc Inventory** foi construído por [Maycon Ferreira](https://github.com/Mayconxzdev) e [Diogo Rodrigues](https://www.linkedin.com/in/diogorj) para reduzir essa dependência de planilhas, memória operacional e conferências manuais. O sistema reúne inventário, saúde técnica, cadastro administrativo e chamados no mesmo contexto do computador.
 
-O projeto é voltado a ambientes Windows em **LAN/VPN privada**. Ele não é um produto de exposição pública na internet e não possui vínculo com a Belarc Inc.; o nome é apenas uma referência histórica ao domínio de inventário de TI.
+O projeto é voltado a ambientes Windows em **LAN/VPN privada** e está em operação interna. Ele não é um produto de exposição pública na internet e não possui vínculo com a Belarc Inc.; o nome é apenas uma referência histórica ao domínio de inventário de TI.
 
 ## O que o sistema entrega
 
