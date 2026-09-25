@@ -95,6 +95,12 @@ Um PC configurado para atender um setor recebe apenas a fila correspondente. Ass
 
 > Todas as imagens deste repositório usam dados fictícios, endereços reservados para documentação e cenários de demonstração.
 
+## Decisões e trade-offs
+
+- Separei agente Windows, servidor e telas por papel: quem atende um chamado recebe o contexto necessário, enquanto a administração do inventário continua com a equipe de TI.
+- Mantive o produto em rede privada e com SQLite para atender ao uso interno atual. Isso simplifica a implantação neste contexto, mas uma expansão para várias unidades exige reavaliar identidade e persistência centralizada.
+- O cache e o último contato da estação ajudam a diagnosticar falhas de conectividade; eles apoiam o suporte, mas não substituem uma plataforma de observabilidade.
+
 ## Arquitetura
 
 ```text
