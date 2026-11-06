@@ -2680,7 +2680,10 @@ mod agent_registration_security_tests {
         assert_eq!(db.register_agent(&first).unwrap(), id);
 
         let attacker = fixture("unknown-token".into(), "PC-01", "UUID-01");
-        assert!(matches!(db.register_agent(&attacker), Err(DbError::InvalidToken)));
+        assert!(matches!(
+            db.register_agent(&attacker),
+            Err(DbError::InvalidToken)
+        ));
         assert_eq!(db.machine_id_by_token(&token).unwrap(), id);
     }
 
@@ -2689,12 +2692,17 @@ mod agent_registration_security_tests {
         let db = Database::open(Path::new(":memory:")).unwrap();
         db.migrate().unwrap();
         let first_token = db.create_agent_token(Some("PC-01")).unwrap();
-        let id = db.register_agent(&fixture(first_token.clone(), "PC-01", "UUID-01")).unwrap();
+        let id = db
+            .register_agent(&fixture(first_token.clone(), "PC-01", "UUID-01"))
+            .unwrap();
         let next_token = db.create_agent_token(Some("PC-01")).unwrap();
         let next = fixture(next_token.clone(), "PC-01", "UUID-01");
         assert_eq!(db.register_agent(&next).unwrap(), id);
         assert_eq!(db.machine_id_by_token(&next_token).unwrap(), id);
-        assert!(matches!(db.register_agent(&fixture(first_token, "PC-01", "UUID-01")), Err(DbError::InvalidToken)));
+        assert!(matches!(
+            db.register_agent(&fixture(first_token, "PC-01", "UUID-01")),
+            Err(DbError::InvalidToken)
+        ));
     }
 
     #[test]
@@ -2702,8 +2710,12 @@ mod agent_registration_security_tests {
         let db = Database::open(Path::new(":memory:")).unwrap();
         db.migrate().unwrap();
         let token = db.create_agent_token(Some("PC-01")).unwrap();
-        db.register_agent(&fixture(token.clone(), "PC-01", "UUID-01")).unwrap();
-        assert!(matches!(db.register_agent(&fixture(token, "PC-01", "UUID-02")), Err(DbError::InvalidToken)));
+        db.register_agent(&fixture(token.clone(), "PC-01", "UUID-01"))
+            .unwrap();
+        assert!(matches!(
+            db.register_agent(&fixture(token, "PC-01", "UUID-02")),
+            Err(DbError::InvalidToken)
+        ));
     }
 
     #[test]
@@ -2711,6 +2723,9 @@ mod agent_registration_security_tests {
         let db = Database::open(Path::new(":memory:")).unwrap();
         db.migrate().unwrap();
         let token = db.create_agent_token(Some("PC-02")).unwrap();
-        assert!(matches!(db.register_agent(&fixture(token, "PC-01", "UUID-01")), Err(DbError::InvalidToken)));
+        assert!(matches!(
+            db.register_agent(&fixture(token, "PC-01", "UUID-01")),
+            Err(DbError::InvalidToken)
+        ));
     }
 }
