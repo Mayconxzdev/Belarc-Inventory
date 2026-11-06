@@ -1563,7 +1563,8 @@ impl Database {
     }
 
     pub fn register_agent(&self, payload: &RegisterPayload) -> Result<String, DbError> {
-        let conn = self.conn.lock().unwrap();
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction()?;
         let now = Utc::now().to_rfc3339();
         let fingerprint = belarc_shared::machine_fingerprint(
             payload.machine_uuid.as_deref(),
@@ -1572,18 +1573,38 @@ impl Database {
             &payload.hostname,
         );
 
-        // Mesmo PC (fingerprint) com token novo -> reutiliza registro existente
-        if let Some(id) = conn
+        // A fingerprint is not authentication: hardware identifiers can be copied.
+        // Rebinding a known device requires the old token or a fresh TI-issued
+        // enrollment explicitly bound to this hostname.
+        let valid_enrollment = tx
             .query_row(
-                "SELECT id FROM machines WHERE machine_fingerprint = ?1",
+                "SELECT 1 FROM agent_tokens
+                 WHERE token = ?1 AND active = 1 AND expires_at > ?2
+                   AND consumed_at IS NULL
+                   AND (hostname IS NULL OR TRIM(hostname) = ''
+                        OR UPPER(TRIM(hostname)) = UPPER(TRIM(?3)))",
+                params![payload.agent_token, now, payload.hostname],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+
+        if let Some((id, current_token)) = tx
+            .query_row(
+                "SELECT id, agent_token FROM machines WHERE machine_fingerprint = ?1",
                 [&fingerprint],
-                |row| row.get::<_, String>(0),
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
             )
             .optional()?
         {
-            conn.execute(
-                "UPDATE machines SET agent_token=?1, hostname=?2, serial=?3, machine_uuid=?4,
-                 mac_primary=?5, last_seen=?6, status='online' WHERE id=?7",
+            if payload.agent_token != current_token && !valid_enrollment {
+                return Err(DbError::InvalidToken);
+            }
+
+            tx.execute(
+                "UPDATE machines SET agent_token=?1, hostname=?2, serial=?3,
+                 machine_uuid=?4, mac_primary=?5, last_seen=?6, status='online'
+                 WHERE id=?7",
                 params![
                     payload.agent_token,
                     payload.hostname,
@@ -1594,52 +1615,39 @@ impl Database {
                     id,
                 ],
             )?;
+
+            if payload.agent_token != current_token {
+                tx.execute(
+                    "UPDATE agent_tokens SET active=0, consumed_at=?2 WHERE token=?1",
+                    params![payload.agent_token, now],
+                )?;
+            }
+            tx.commit()?;
             return Ok(id);
         }
 
-        if let Some(id) = conn
+        // A previously registered token cannot silently move to a different
+        // hardware fingerprint. An administrator must enroll the replacement.
+        if tx
             .query_row(
-                "SELECT id FROM machines WHERE agent_token = ?1",
+                "SELECT 1 FROM machines WHERE agent_token = ?1",
                 [&payload.agent_token],
-                |row| row.get::<_, String>(0),
-            )
-            .optional()?
-        {
-            conn.execute(
-                "UPDATE machines SET hostname=?1, serial=?2, machine_uuid=?3, mac_primary=?4,
-                 machine_fingerprint=?5, last_seen=?6, status='online' WHERE id=?7",
-                params![
-                    payload.hostname,
-                    payload.serial,
-                    payload.machine_uuid,
-                    payload.mac_primary,
-                    fingerprint,
-                    now,
-                    id,
-                ],
-            )?;
-            return Ok(id);
-        }
-
-        // Um agente novo só pode entrar com uma matrícula criada por uma sessão TI.
-        // Depois do primeiro uso, o mesmo token continua ligado exclusivamente à
-        // máquina registrada acima, mas não pode cadastrar outro computador.
-        let enrollment_is_valid = conn
-            .query_row(
-                "SELECT 1 FROM agent_tokens
-                 WHERE token = ?1 AND active = 1 AND expires_at > ?2 AND consumed_at IS NULL",
-                params![payload.agent_token, now],
                 |_| Ok(()),
             )
             .optional()?
-            .is_some();
-        if !enrollment_is_valid {
+            .is_some()
+        {
+            return Err(DbError::InvalidToken);
+        }
+
+        if !valid_enrollment {
             return Err(DbError::InvalidToken);
         }
 
         let id = belarc_shared::new_id();
-        conn.execute(
-            "INSERT INTO machines (id, agent_token, hostname, serial, machine_uuid, mac_primary, machine_fingerprint, status, first_seen, last_seen)
+        tx.execute(
+            "INSERT INTO machines (id, agent_token, hostname, serial, machine_uuid,
+             mac_primary, machine_fingerprint, status, first_seen, last_seen)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'online', ?8, ?8)",
             params![
                 id,
@@ -1652,10 +1660,11 @@ impl Database {
                 now,
             ],
         )?;
-        conn.execute(
-            "UPDATE agent_tokens SET active = 0, consumed_at = ?2 WHERE token = ?1",
+        tx.execute(
+            "UPDATE agent_tokens SET active=0, consumed_at=?2 WHERE token=?1",
             params![payload.agent_token, now],
         )?;
+        tx.commit()?;
         Ok(id)
     }
 
@@ -2645,4 +2654,78 @@ fn parse_incident_row(row: &rusqlite::Row<'_>) -> Result<IncidentRecord, rusqlit
 #[allow(dead_code)]
 pub fn compute_collector_hash(data: &serde_json::Value) -> String {
     hash_json(data)
+}
+
+#[cfg(test)]
+mod agent_registration_security_tests {
+    use super::*;
+
+    fn fixture(token: String, hostname: &str, uuid: &str) -> RegisterPayload {
+        RegisterPayload {
+            agent_token: token,
+            hostname: hostname.into(),
+            serial: Some("SERIAL-001".into()),
+            machine_uuid: Some(uuid.into()),
+            mac_primary: Some("00-11-22-33-44-55".into()),
+        }
+    }
+
+    #[test]
+    fn unknown_token_cannot_replace_registered_fingerprint() {
+        let db = Database::open(Path::new(":memory:")).unwrap();
+        db.migrate().unwrap();
+        let token = db.create_agent_token(Some("PC-01")).unwrap();
+        let first = fixture(token.clone(), "PC-01", "UUID-01");
+        let id = db.register_agent(&first).unwrap();
+        assert_eq!(db.register_agent(&first).unwrap(), id);
+
+        let attacker = fixture("unknown-token".into(), "PC-01", "UUID-01");
+        assert!(matches!(
+            db.register_agent(&attacker),
+            Err(DbError::InvalidToken)
+        ));
+        assert_eq!(db.machine_id_by_token(&token).unwrap(), id);
+    }
+
+    #[test]
+    fn ti_enrollment_can_rotate_token_for_same_device_once() {
+        let db = Database::open(Path::new(":memory:")).unwrap();
+        db.migrate().unwrap();
+        let first_token = db.create_agent_token(Some("PC-01")).unwrap();
+        let id = db
+            .register_agent(&fixture(first_token.clone(), "PC-01", "UUID-01"))
+            .unwrap();
+        let next_token = db.create_agent_token(Some("PC-01")).unwrap();
+        let next = fixture(next_token.clone(), "PC-01", "UUID-01");
+        assert_eq!(db.register_agent(&next).unwrap(), id);
+        assert_eq!(db.machine_id_by_token(&next_token).unwrap(), id);
+        assert!(matches!(
+            db.register_agent(&fixture(first_token, "PC-01", "UUID-01")),
+            Err(DbError::InvalidToken)
+        ));
+    }
+
+    #[test]
+    fn existing_token_cannot_move_to_different_fingerprint() {
+        let db = Database::open(Path::new(":memory:")).unwrap();
+        db.migrate().unwrap();
+        let token = db.create_agent_token(Some("PC-01")).unwrap();
+        db.register_agent(&fixture(token.clone(), "PC-01", "UUID-01"))
+            .unwrap();
+        assert!(matches!(
+            db.register_agent(&fixture(token, "PC-01", "UUID-02")),
+            Err(DbError::InvalidToken)
+        ));
+    }
+
+    #[test]
+    fn enrollment_bound_to_other_hostname_is_rejected() {
+        let db = Database::open(Path::new(":memory:")).unwrap();
+        db.migrate().unwrap();
+        let token = db.create_agent_token(Some("PC-02")).unwrap();
+        assert!(matches!(
+            db.register_agent(&fixture(token, "PC-01", "UUID-01")),
+            Err(DbError::InvalidToken)
+        ));
+    }
 }
