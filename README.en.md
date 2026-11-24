@@ -1,5 +1,7 @@
 # Belarc Inventory
 
+[Portfolio case](https://mayconxzdev.github.io/projetos/belarc-inventory/)
+
 Belarc Inventory is a Windows workstation inventory, health, audit, and department-based ticketing system for private LAN/VPN deployments.
 
 Built by **Maycon Ferreira** and **Diogo Rodrigues**, it combines a Rust/PowerShell agent, Axum + SQLite server, IT dashboard, and workstation ticket portal.
