@@ -1,5 +1,7 @@
 # Belarc Inventory
 
+[Case no portfólio](https://mayconxzdev.github.io/projetos/belarc-inventory/) · [Demonstração com dados fictícios](#visão-do-produto)
+
 [![CI](https://github.com/Mayconxzdev/Belarc-Inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/Mayconxzdev/Belarc-Inventory/actions/workflows/ci.yml)
 [![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078D4?logo=windows&logoColor=white)](#requisitos)
 [![Rust](https://img.shields.io/badge/backend-Rust-000000?logo=rust&logoColor=white)](#arquitetura)
